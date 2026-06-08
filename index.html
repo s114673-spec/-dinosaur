@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>噴火小恐龍大冒險</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f7f7f7;
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        canvas {
+            display: block;
+            background-color: #ffffff;
+            border-radius: 8px;
+        }
+
+        /* 歡迎/選角畫面 */
+        #menu-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            border-radius: 8px;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .instructions {
+            background: #f0f0f0;
+            padding: 12px 20px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #444;
+            width: 80%;
+        }
+
+        .character-select {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .char-option {
+            border: 3px solid #ccc;
+            border-radius: 8px;
+            padding: 8px;
+            cursor: pointer;
+            text-align: center;
+            background: white;
+            transition: all 0.2s;
+            width: 80px;
+        }
+
+        .char-option.selected {
+            border-color: #ff4757;
+            background-color: #ffeaa7;
+            transform: scale(1.05);
+        }
+
+        .char-option img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto 5px auto;
+            background-color: #eee; /* 預防圖片沒讀到時的底色 */
+        }
+
+        .char-option span {
+            font-size: 12px;
+            font-weight: bold;
+            display: block;
+        }
+
+        .start-hint {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ff4757;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="menu-screen">
+        <h1>噴火小恐龍大冒險</h1>
+        
+        <div class="instructions">
+            <strong>【操控玩法】</strong><br>
+            • <b>向右箭頭 (➔)</b>：小恐龍向右奔跑加速<br>
+            • <b>向上箭頭 (▲)</b>：小恐龍跳躍<br>
+            • <b>空白鍵 (Space)</b>：從小恐龍嘴巴噴火攻擊仙人掌<br><br>
+            <strong>【計分與仙人掌規則】</strong><br>
+            • 🌵 <b>小仙人掌</b>：按 <b>1下</b> 空白鍵燒掉。燒掉或跳過皆得 <b>10分</b>。<br>
+            • 🌵🌵 <b>中仙人掌</b>：需按 <b>2下</b> 空白鍵燒掉。燒掉得 <b>20分</b>（太高無法跳過）。<br>
+            • 🌵🌵🌵 <b>大仙人掌</b>：需按 <b>3下</b> 空白鍵燒掉。燒掉得 <b>30分</b>（太高無法跳過）。<br>
+            • 💥 <b>注意</b>：撞到任何未被燒掉的仙人掌，遊戲即結束！
+        </div>
+
+        <p style="margin: 0 0 10px 0; font-weight: bold; color: #555;">請選擇你的小恐龍：</p>
+        <div class="character-select" id="char-select-container">
+            <div class="char-option selected" data-img="小恐龍1.JPG">
+                <img src="小恐龍1.JPG" alt="粉">
+                <span>粉小恐龍</span>
+            </div>
+            <div class="char-option" data-img="小恐龍2.JPG">
+                <img src="小恐龍2.JPG" alt="藍">
+                <span>藍小恐龍</span>
+            </div>
+            <div class="char-option" data-img="小恐龍3.JPG">
+                <img src="小恐龍3.JPG" alt="紫">
+                <span>紫小恐龍</span>
+            </div>
+            <div class="char-option" data-img="小恐龍4.JPG">
+                <img src="小恐龍4.JPG" alt="綠">
+                <span>綠小恐龍</span>
+            </div>
+            <div class="char-option" data-img="小恐龍5.JPG">
+                <img src="小恐龍5.JPG" alt="黃">
+                <span>黃小恐龍</span>
+            </div>
+        </div>
+
+        <div class="start-hint">選擇完畢後，請按【 Enter 鍵 】進入遊戲！</div>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const menuScreen = document.getElementById('menu-screen');
+const charOptions = document.querySelectorAll('.char-option');
+
+// 遊戲狀態
+let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER
+let score = 0;
+let selectedDinoImgSrc = '小恐龍1.JPG';
+
+// 載入仙人掌圖片
+const imgCactusSmall = new Image(); imgCactusSmall.src = '小仙人掌.png';
+const imgCactusMedium = new Image(); imgCactusMedium.src = '中仙人掌.png';
+const imgCactusLarge = new Image(); imgCactusLarge.src = '大仙人掌.png';
+const imgDino = new Image(); // 動態載入
+
+// 遊戲參數設定
+const GROUND_Y = 330;
+let gameSpeed = 4;
+let obstacles = [];
+let fireballs = [];
+
+// 按鍵狀態記錄
+const keys = {
+    ArrowUp: false,
+    ArrowRight: false,
+    Space: false
+};
+
+// 小恐龍物件
+const dino = {
+    x: 100,
+    y: GROUND_Y - 60,
+    width: 60,
+    height: 60,
+    vy: 0,
+    gravity: 0.6,
+    jumpForce: -12,
+    isGrounded: true,
+    runSpeed: 3,
+    baseX: 100,
+    
+    update() {
+        // 向右跑的控制（按下向右鍵會向右位移，放開回彈）
+        if (keys.ArrowRight) {
+            if (this.x < canvas.width - this.width - 50) {
+                this.x += this.runSpeed;
+            }
+        } else {
+            if (this.x > this.baseX) {
+                this.x -= 2; // 慢慢退回原點
+            }
+        }
+
+        // 跳躍與重力邏輯
+        if (keys.ArrowUp && this.isGrounded) {
+            this.vy = this.jumpForce;
+            this.isGrounded = false;
+        }
+
+        this.vy += this.gravity;
+        this.y += this.vy;
+
+        // 落地偵測
+        if (this.y >= GROUND_Y - this.height) {
+            this.y = GROUND_Y - this.height;
+            this.vy = 0;
+            this.isGrounded = true;
+        }
+    },
+
+    draw() {
+        // 如果圖片讀取失敗，畫一個方塊代替
+        if (imgDino.complete && imgDino.naturalWidth !== 0) {
+            ctx.drawImage(imgDino, this.x, this.y, this.width, this.height);
+        } else {
+            ctx.fillStyle = '#ff4757';
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.fillStyle = '#fff';
+            ctx.fillText("Dino", this.x+15, this.y+35);
+        }
+    }
+};
+
+// 點選恐龍頭像事件
+charOptions.forEach(option => {
+    option.addEventListener('click', () => {
+        charOptions.forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+        selectedDinoImgSrc = option.getAttribute('data-img');
+    });
+});
+
+// 監聽鍵盤事件
+window.addEventListener('keydown', (e) => {
+    if (e.code === 'ArrowUp') keys.ArrowUp = true;
+    if (e.code === 'ArrowRight') keys.ArrowRight = true;
+    
+    if (e.code === 'Space') {
+        e.preventDefault(); // 防止網頁滾動
+        if (!keys.Space && gameState === 'PLAYING') {
+            shootFireball();
+        }
+        keys.Space = true;
+    }
+
+    if (e.code === 'Enter') {
+        if (gameState === 'MENU') {
+            startGame();
+        } else if (gameState === 'GAMEOVER') {
+            resetToMenu();
+        }
+    }
+});
+
+window.addEventListener('keyup', (e) => {
+    if (e.code === 'ArrowUp') keys.ArrowUp = false;
+    if (e.code === 'ArrowRight') keys.ArrowRight = false;
+    if (e.code === 'Space') keys.Space = false;
+});
+
+// 發射火球
+function shootFireball() {
+    fireballs.push({
+        x: dino.x + dino.width - 10,
+        y: dino.y + dino.height / 2 - 10,
+        width: 30,
+        height: 15,
+        speed: 10
+    });
+}
+
+// 產生障礙物 (仙人掌)
+let obstacleTimer = 0;
+let nextObstacleTime = 120; // 幀數間隔
+
+function spawnObstacle() {
+    const rand = Math.random();
+    let type, width, height, hp, scoreVal, img;
+
+    if (rand < 0.4) {
+        type = 'small'; width = 40; height = 50; hp = 1; scoreVal = 10; img = imgCactusSmall;
+    } else if (rand < 0.75) {
+        type = 'medium'; width = 55; height = 75; hp = 2; scoreVal = 20; img = imgCactusMedium;
+    } else {
+        type = 'large'; width = 70; height = 95; hp = 3; scoreVal = 30; img = imgCactusLarge;
+    }
+
+    obstacles.push({
+        x: canvas.width + 50,
+        y: GROUND_Y - height,
+        width: width,
+        height: height,
+        type: type,
+        hp: hp,
+        maxHp: hp,
+        scoreValue: scoreVal,
+        img: img,
+        passed: false // 用於記錄小恐龍是否已跳過(僅限小仙人掌)
+    });
+
+    // 隨機冷卻下次生成時間
+    nextObstacleTime = Math.floor(Math.random() * 80) + 100 - (gameSpeed * 2);
+    if (nextObstacleTime < 60) nextObstacleTime = 60;
+}
+
+// 開始遊戲
+function startGame() {
+    imgDino.src = selectedDinoImgSrc;
+    menuScreen.style.display = 'none';
+    gameState = 'PLAYING';
+    score = 0;
+    gameSpeed = 5;
+    obstacles = [];
+    fireballs = [];
+    dino.x = dino.baseX;
+    dino.y = GROUND_Y - dino.height;
+    dino.vy = 0;
+    dino.isGrounded = true;
+    obstacleTimer = 0;
+}
+
+// 回到選單
+function resetToMenu() {
+    gameState = 'MENU';
+    menuScreen.style.display = 'flex';
+}
+
+// 碰撞偵測 AABB
+function checkCollision(rect1, rect2) {
+    return rect1.x < rect2.x + rect2.width &&
+           rect1.x + rect1.width > rect2.x &&
+           rect1.y < rect2.y + rect2.height &&
+           rect1.y + rect1.height > rect2.y;
+}
+
+// 主遊戲循環
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 畫地平線
+    ctx.beginPath();
+    ctx.moveTo(0, GROUND_Y);
+    ctx.lineTo(canvas.width, GROUND_Y);
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    if (gameState === 'PLAYING') {
+        // 隨難度慢慢微幅加速
+        gameSpeed += 0.0005;
+
+        // 更新恐龍
+        dino.update();
+
+        // 產生障礙物管理
+        obstacleTimer++;
+        if (obstacleTimer >= nextObstacleTime) {
+            spawnObstacle();
+            obstacleTimer = 0;
+        }
+
+        // 更新與繪製火球
+        for (let i = fireballs.length - 1; i >= 0; i--) {
+            let f = fireballs[i];
+            f.x += f.speed;
+
+            // 畫火球效果
+            ctx.fillStyle = '#ff6b6b';
+            ctx.beginPath();
+            ctx.ellipse(f.x + f.width/2, f.y + f.height/2, f.width/2, f.height/2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 火球內核
+            ctx.fillStyle = '#ffa502';
+            ctx.beginPath();
+            ctx.ellipse(f.x + f.width/2, f.y + f.height/2, f.width/3, f.height/3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 超出螢幕移除
+            if (f.x > canvas.width) {
+                fireballs.splice(i, 1);
+            }
+        }
+
+        // 更新與繪製仙人掌
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            let obs = obstacles[i];
+            obs.x -= gameSpeed;
+
+            // 檢查是否與火球碰撞
+            for (let j = fireballs.length - 1; j >= 0; j--) {
+                if (checkCollision(fireballs[j], obs)) {
+                    obs.hp--;
+                    fireballs.splice(j, 1); // 移除火球
+
+                    if (obs.hp <= 0) {
+                        score += obs.scoreValue; // 燒掉仙人掌獲得對應分數
+                        obstacles.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+
+            // 如果剛剛那一顆被打破了，就跳過下面的邏輯
+            if (!obstacles[i]) continue;
+
+            // 檢查小恐龍是否成功「跳過」小仙人掌
+            if (obs.type === 'small' && !obs.passed && (dino.x > obs.x + obs.width)) {
+                obs.passed = true;
+                score += 10; // 跳過小仙人掌得10分
+            }
+
+            // 畫仙人掌
+            if (obs.img.complete && obs.img.naturalWidth !== 0) {
+                ctx.drawImage(obs.img, obs.x, obs.y, obs.width, obs.height);
+            } else {
+                // 圖片尚未載入時的替代方塊
+                ctx.fillStyle = '#2ed573';
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                ctx.fillStyle = '#000';
+                ctx.font = '12px Arial';
+                ctx.fillText(`${obs.type}(HP:${obs.hp})`, obs.x, obs.y - 5);
+            }
+
+            // 顯示血量條 (若受過傷或中大型顯示，方便提示玩家)
+            if (obs.hp < obs.maxHp || obs.maxHp > 1) {
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(obs.x, obs.y - 12, obs.width, 6);
+                ctx.fillStyle = '#ff4757';
+                ctx.fillRect(obs.x, obs.y - 12, obs.width * (obs.hp / obs.maxHp), 6);
+            }
+
+            // 檢查與小恐龍的碰撞（遊戲結束條件）
+            if (checkCollision(dino, obs)) {
+                gameState = 'GAMEOVER';
+            }
+
+            // 超出螢幕邊界移除
+            if (obs.x + obs.width < 0) {
+                obstacles.splice(i, 1);
+            }
+        }
+
+    } else if (gameState === 'GAMEOVER') {
+        // 遊戲結束時保持最後畫面，但畫上 Game Over 字樣
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 36px Microsoft JhengHei';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 20);
+        
+        ctx.font = '20px Microsoft JhengHei';
+        ctx.fillText(`最終得分：${score} 分`, canvas.width / 2, canvas.height / 2 + 20);
+        
+        ctx.font = '16px Microsoft JhengHei';
+        ctx.fillStyle = '#ffeaa7';
+        ctx.fillText('按【 Enter 鍵 】重新回到主選單選角', canvas.width / 2, canvas.height / 2 + 60);
+    }
+
+    // 不管在哪個畫面（除了純選單），都要繪製恐龍與右上角分數
+    if (gameState !== 'MENU') {
+        dino.draw();
+        
+        // 繪製計分板
+        ctx.fillStyle = '#333333';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'right';
+        ctx.fillText(`SCORE: ${score}`, canvas.width - 30, 40);
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+// 啟動遊戲循環
+requestAnimationFrame(gameLoop);
+</script>
+
+</body>
+</html>
